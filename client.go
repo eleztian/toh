@@ -7,7 +7,6 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"strings"
 	"time"
 )
@@ -105,8 +104,6 @@ func Dial(method string, addr string, ops ...DialerOption) (net.Conn, error) {
 func dial(ctx context.Context, req *http.Request, tlsConfig *tls.Config) (conn net.Conn, err error) {
 	var addr = req.Host
 
-	content, _ := httputil.DumpRequest(req, false)
-
 	ctxTo, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
@@ -130,7 +127,7 @@ func dial(ctx context.Context, req *http.Request, tlsConfig *tls.Config) (conn n
 		return nil, err
 	}
 
-	_, err = conn.Write(content)
+	err = req.WithContext(ctx).Write(conn)
 	if err != nil {
 		_ = conn.Close()
 		return nil, err
